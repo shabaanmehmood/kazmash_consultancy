@@ -100,6 +100,9 @@ const WhoWeAre = () => {
                     <p className="text-xs md:text-sm opacity-90">
                       Founder & CEO
                     </p>
+                    <p className="text-xs md:text-sm opacity-90">
+                     Haji Muhammad Khurshid
+                    </p>
                   </div>
                 </div>
               </div>

@@ -9,6 +9,7 @@ import {
   FaHandshake,
   FaCheckCircle,
   FaTimesCircle,
+  FaInfoCircle,
 } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -23,18 +24,93 @@ const Services = () => {
     questionNotes: "",
   });
 
+  const [errors, setErrors] = useState({
+    phone: "",
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: { target: { name: any; value: any } }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Special handling for phone number input
+    if (name === "phone") {
+      // Auto-add + if it's not there and the user starts typing numbers
+      let formattedValue = value;
+      if (/^[0-9]/.test(value) && !value.startsWith("+")) {
+        formattedValue = `+${value}`;
+      }
+
+      // Validate phone number format
+      const phoneRegex = /^\+[0-9]{1,3}[0-9]{4,14}$/; // Basic international phone format
+      const isValid = formattedValue === "" || phoneRegex.test(formattedValue);
+
+      setErrors(prev => ({
+        ...prev,
+        phone: isValid ? "" : "Please enter a valid international phone number (e.g., +49123456789)"
+      }));
+
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = { ...errors };
+
+    // Phone validation (only if provided)
+    if (formData.phone && errors.phone) {
+      isValid = false;
+    }
+
+    // Check required fields
+    if (!formData.fullName.trim()) {
+      isValid = false;
+    }
+    if (!formData.email.trim()) {
+      isValid = false;
+    }
+    if (!formData.studyLevel) {
+      isValid = false;
+    }
+    if (!formData.areaOfInterest) {
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error(
+        <div className="flex items-center">
+          <FaTimesCircle className="text-red-500 mr-2 text-xl" />
+          <span>Please fill all required fields correctly</span>
+        </div>,
+        {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          className: "bg-white text-gray-800 font-medium",
+        }
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -176,9 +252,21 @@ const Services = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-3 border ${
+                    errors.phone ? "border-red-500" : "border-gray-300"
+                  } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                   placeholder="+49 123 456 789"
+                  pattern="^\+[0-9]{1,3}[0-9]{4,14}$"
                 />
+                {errors.phone && (
+                  <div className="flex items-center mt-1 text-red-600 text-sm">
+                    <FaInfoCircle className="mr-1" />
+                    <span>{errors.phone}</span>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Please include country code (e.g., +49 for Germany)
+                </p>
               </div>
 
               <div>
